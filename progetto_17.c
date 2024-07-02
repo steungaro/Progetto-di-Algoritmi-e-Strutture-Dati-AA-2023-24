@@ -11,21 +11,6 @@ typedef struct scadenze {
     struct scadenze *next;
 } scadenze_t;
 
-typedef struct ingrediente {
-    char nome[L_NOME_MAX];
-    int h;
-    unsigned int q;
-    struct ingrediente *next;
-} ingrediente_t;
-
-typedef struct ricetta {
-    char nome[L_NOME_MAX];
-    ingrediente_t *lista_ingredienti;
-    unsigned int pending;
-    unsigned int peso;
-    struct ricetta *next;
-} ricetta_t;
-
 typedef struct {
     ricetta_t* elenco_ricette[DIM_RICETTE];
 } ricettario_hash_t;
@@ -55,9 +40,24 @@ typedef struct ingrediente_stock {
     lotto_t* lotto;
 } ingrediente_stock_t;
 
+typedef struct ingrediente {
+    char nome[L_NOME_MAX];
+    int h;
+    unsigned int q;
+    struct ingrediente *next;
+} ingrediente_t;
+
 typedef struct {
     ingrediente_stock_t* stock_ingredienti[DIM_MAGAZZINO];
 } magazzino_hash_t;
+
+typedef struct ricetta {
+    char nome[L_NOME_MAX];
+    ingrediente_t *lista_ingredienti;
+    unsigned int pending;
+    unsigned int peso;
+    struct ricetta *next;
+} ricetta_t;
 
 int funzione_hash(char* nome, int dim) {
     int i;
