@@ -2,15 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define L_INPUT_MAX 17
 #define L_NOME_MAX 256
-#define DIM_RICETTE 3017
-#define DIM_MAGAZZINO 3017
-
-typedef struct scadenze
-{
-    unsigned int s;
-    struct scadenze *next;
-} scadenze_t;
+#define DIM_RICETTE 1307
+#define DIM_MAGAZZINO 1307
 
 typedef struct lotto
 {
@@ -24,9 +19,10 @@ typedef struct lotto
 typedef struct ingrediente_stock
 {
     struct ingrediente_stock *next;
-    char nome[L_NOME_MAX];
+    char *nome;
     unsigned int totale;
     lotto_t *lotto;
+    unsigned int pending;
 } ingrediente_stock_t;
 
 typedef struct ingrediente
@@ -43,7 +39,7 @@ typedef struct
 
 typedef struct ricetta
 {
-    char nome[L_NOME_MAX];
+    char *nome;
     ingrediente_t *lista_ingredienti;
     unsigned int pending;
     unsigned int peso;
@@ -89,6 +85,7 @@ void elimina_lista_ingredienti(ingrediente_t *lista)
     while (lista != NULL)
     {
         temp = lista;
+        temp->stock->pending--;
         lista = lista->next;
         free(temp);
         temp = NULL;
@@ -500,6 +497,7 @@ void elimina_hash_ricettario(ricettario_hash_t *ricettario)
             elimina_lista_ingredienti(ricettario->elenco_ricette[i]->lista_ingredienti);
             temp = ricettario->elenco_ricette[i];
             ricettario->elenco_ricette[i] = ricettario->elenco_ricette[i]->next;
+            free(temp->nome);
             free(temp);
             temp = NULL;
         }
@@ -521,6 +519,7 @@ void elimina_hash_magazzino(magazzino_hash_t *magazzino)
             elimina_albero_lotti(magazzino->stock_ingredienti[i]->lotto);
             elim = magazzino->stock_ingredienti[i];
             magazzino->stock_ingredienti[i] = magazzino->stock_ingredienti[i]->next;
+            free(elim->nome);
             free(elim);
             elim = NULL;
         }
@@ -529,7 +528,7 @@ void elimina_hash_magazzino(magazzino_hash_t *magazzino)
     magazzino = NULL;
 }
 
-ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *lista, char *nome, unsigned int q)
+ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *lista, char **nome, unsigned int q)
 {
     ingrediente_t *temp;
     ingrediente_stock_t *stock_temp, *stock_prev;
@@ -540,7 +539,7 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
     temp = malloc(sizeof(ingrediente_t));
     if (temp)
     {
-        h = funzione_hash(nome, DIM_MAGAZZINO);
+        h = funzione_hash(*nome, DIM_MAGAZZINO);
         stock_temp = magazzino->stock_ingredienti[h];
 
         if (stock_temp == NULL)
@@ -548,9 +547,10 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
             magazzino->stock_ingredienti[h] = malloc(sizeof(ingrediente_stock_t));
             if (magazzino->stock_ingredienti[h])
             {
-                strcpy(magazzino->stock_ingredienti[h]->nome, nome);
+                magazzino->stock_ingredienti[h]->nome = *nome;
                 magazzino->stock_ingredienti[h]->next = NULL;
                 magazzino->stock_ingredienti[h]->totale = 0;
+                magazzino->stock_ingredienti[h]->pending = 1;
                 magazzino->stock_ingredienti[h]->lotto = NULL;
                 temp->next = lista;
                 temp->q = q;
@@ -566,12 +566,14 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
         {
             for (stock_temp = magazzino->stock_ingredienti[h]; stock_temp != NULL && !stop; stock_temp = stock_temp->next)
             {
-                if (!strcmp(stock_temp->nome, nome))
+                if (!strcmp(stock_temp->nome, *nome))
                 {
                     stop = 1;
+                    stock_temp->pending++;
                     temp->next = lista;
                     temp->q = q;
                     temp->stock = stock_temp;
+                    free(*nome);
                     return temp;
                 }
                 stock_prev = stock_temp;
@@ -582,7 +584,8 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
                 stock_prev->next->totale = 0;
                 stock_prev->next->lotto = NULL;
                 stock_prev->next->next = NULL;
-                strcpy(stock_prev->next->nome, nome);
+                stock_prev->next->pending = 1;
+                stock_prev->next->nome = *nome;
                 temp->next = lista;
                 temp->q = q;
                 temp->stock = stock_prev->next;
@@ -601,17 +604,17 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
     }
 }
 
-int aggiungi_ricetta(ricettario_hash_t *ricettario, char *nome_ricetta, ingrediente_t *lista_ingredienti, unsigned int peso)
+int aggiungi_ricetta(ricettario_hash_t *ricettario, char **nome_ricetta, ingrediente_t *lista_ingredienti, unsigned int peso)
 {
     int i;
     ricetta_t *temp_ricetta;
-    i = funzione_hash(nome_ricetta, DIM_RICETTE);
+    i = funzione_hash(*nome_ricetta, DIM_RICETTE);
 
     temp_ricetta = NULL;
     temp_ricetta = malloc(sizeof(ricetta_t));
     if (temp_ricetta)
     {
-        strcpy(temp_ricetta->nome, nome_ricetta);
+        temp_ricetta->nome = *nome_ricetta;
         temp_ricetta->lista_ingredienti = lista_ingredienti;
         temp_ricetta->pending = 0;
         temp_ricetta->peso = peso;
@@ -636,7 +639,7 @@ int aggiungi_ricetta(ricettario_hash_t *ricettario, char *nome_ricetta, ingredie
     }
 }
 
-int rifornimento(magazzino_hash_t *magazzino, char nome[], unsigned int scadenza, unsigned int quantita)
+int rifornimento(magazzino_hash_t *magazzino, char **nome, unsigned int scadenza, unsigned int quantita)
 {
     lotto_t *lottonuovo;
     ingrediente_stock_t *ingrediente_temp, *ingrediente_prev;
@@ -654,7 +657,7 @@ int rifornimento(magazzino_hash_t *magazzino, char nome[], unsigned int scadenza
         lottonuovo->right = NULL;
         lottonuovo->p = NULL;
 
-        h = funzione_hash(nome, DIM_MAGAZZINO);
+        h = funzione_hash(*nome, DIM_MAGAZZINO);
 
         if (magazzino->stock_ingredienti[h] == NULL)
         {
@@ -663,8 +666,9 @@ int rifornimento(magazzino_hash_t *magazzino, char nome[], unsigned int scadenza
             if (ingrediente_temp)
             {
                 ingrediente_temp->totale = quantita;
+                ingrediente_temp->pending = 0;
                 ingrediente_temp->lotto = lottonuovo;
-                strcpy(ingrediente_temp->nome, nome);
+                ingrediente_temp->nome = *nome;
                 magazzino->stock_ingredienti[h] = ingrediente_temp;
                 magazzino->stock_ingredienti[h]->next = NULL;
             }
@@ -680,10 +684,11 @@ int rifornimento(magazzino_hash_t *magazzino, char nome[], unsigned int scadenza
 
             for (ingrediente_temp = magazzino->stock_ingredienti[h]; ingrediente_temp != NULL; ingrediente_temp = ingrediente_temp->next)
             {
-                if (!strcmp(ingrediente_temp->nome, nome))
+                if (!strcmp(ingrediente_temp->nome, *nome))
                 {
                     ingrediente_temp->totale += quantita;
                     ingrediente_temp->lotto = inserimento_albero_lotti(ingrediente_temp->lotto, lottonuovo);
+                    free(*nome);
                     return h;
                 }
                 ingrediente_prev = ingrediente_temp;
@@ -694,7 +699,8 @@ int rifornimento(magazzino_hash_t *magazzino, char nome[], unsigned int scadenza
                 ingrediente_prev->next->totale = quantita;
                 ingrediente_prev->next->lotto = lottonuovo;
                 ingrediente_prev->next->next = NULL;
-                strcpy(ingrediente_prev->next->nome, nome);
+                ingrediente_prev->next->pending = 0;
+                ingrediente_prev->next->nome = *nome;
             }
             else
             {
@@ -756,6 +762,7 @@ int elimina_ricetta(ricettario_hash_t *ricettario, char *nome_ricetta)
                     ricettario->elenco_ricette[i] = curr;
                 }
                 elimina_lista_ingredienti(temp->lista_ingredienti);
+                free(temp->nome);
                 free(temp);
                 return 1;
             }
@@ -947,13 +954,14 @@ ordine_t *cucina(magazzino_hash_t *magazzino, ordine_t *codaordini, ordine_t **l
 
 void scadenze(magazzino_hash_t *magazzino, unsigned int t)
 {
-    ingrediente_stock_t *ingrediente_temp;
+    ingrediente_stock_t *ingrediente_temp, *prev, *elim;
     lotto_t *lotto_temp;
     int i;
 
     for (i = 0; i < DIM_MAGAZZINO; i++)
     {
         ingrediente_temp = magazzino->stock_ingredienti[i];
+        prev = NULL;
         while (ingrediente_temp != NULL)
         {
             lotto_temp = minimo_in_albero_lotti(ingrediente_temp->lotto);
@@ -964,14 +972,24 @@ void scadenze(magazzino_hash_t *magazzino, unsigned int t)
                 free(lotto_temp);
                 lotto_temp = minimo_in_albero_lotti(ingrediente_temp->lotto);
             }
-            if (ingrediente_temp->totale == 0)
+            if (ingrediente_temp->totale == 0 && ingrediente_temp->pending == 0)
             {
+                elim = ingrediente_temp;
                 elimina_albero_lotti(ingrediente_temp->lotto);
                 ingrediente_temp->lotto = NULL;
                 ingrediente_temp = ingrediente_temp->next;
+                if(prev != NULL) {
+                    prev->next = ingrediente_temp;
+                } else {
+                    magazzino->stock_ingredienti[i] = ingrediente_temp;
+                }
+                free(elim->nome);
+                free(elim);
+                elim = NULL;
             }
             else
             {
+                prev = ingrediente_temp;
                 ingrediente_temp = ingrediente_temp->next;
             }
         }
@@ -1045,7 +1063,7 @@ ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
 
 int main()
 {
-    char input[L_NOME_MAX], nome[L_NOME_MAX], ingrediente[L_NOME_MAX];
+    char input[L_INPUT_MAX], nome[L_NOME_MAX], ingrediente[L_NOME_MAX];
     int t, fc, pc, qt, peso, sc;
     unsigned int ret;
     char nl;
@@ -1054,12 +1072,14 @@ int main()
     magazzino_hash_t *magazzino;
     ingrediente_t *lista_ingredienti;
     ricetta_t *tempricetta;
+    char *tempstringa;
 
     ricettario = NULL;
     coda_ordini = NULL;
     albero_prodotti = NULL;
     magazzino = NULL;
     last = NULL;
+    tempstringa = NULL;
 
     ricettario = crea_hash_ricettario();
     magazzino = crea_hash_magazzino();
@@ -1096,20 +1116,27 @@ int main()
                     if (scanf("%s %d", ingrediente, &qt))
                         ;
                     peso += qt;
-                    lista_ingredienti = aggiungi_ingrediente(magazzino, lista_ingredienti, ingrediente, qt);
+                    tempstringa = malloc(sizeof(char)*(strlen(ingrediente) + 1));
+                    strcpy(tempstringa, ingrediente);
+                    lista_ingredienti = aggiungi_ingrediente(magazzino, lista_ingredienti, &tempstringa, qt);
                     if (scanf("%c", &nl))
                         ;
+                    tempstringa = NULL;
                 }
-                ret = aggiungi_ricetta(ricettario, nome, lista_ingredienti, peso);
+                tempstringa = malloc(sizeof(char)*(strlen(nome) + 1));
+                strcpy(tempstringa, nome);
+                ret = aggiungi_ricetta(ricettario, &tempstringa, lista_ingredienti, peso);
                 if (ret == -1)
                 {
                     elimina_lista_ingredienti(lista_ingredienti);
+                    free(tempstringa);
                     printf("errore aggiunta ricetta.\n");
                 }
                 else
                 {
                     printf("aggiunta\n");
                 }
+                tempstringa = NULL;
             }
             else
             {
@@ -1144,11 +1171,17 @@ int main()
             {
                 if (scanf("%s %d %d", nome, &qt, &sc))
                     ;
+                tempstringa = malloc(sizeof(char)*(strlen(nome) + 1));
+                strcpy(tempstringa, nome);
 
                 if (sc > t)
                 {
-                    ret = rifornimento(magazzino, nome, sc, qt);
+                    ret = rifornimento(magazzino, &tempstringa, sc, qt);
+                } else {
+                    free(tempstringa);
                 }
+
+                tempstringa = NULL;
 
                 if (scanf("%c", &nl))
                     ;
