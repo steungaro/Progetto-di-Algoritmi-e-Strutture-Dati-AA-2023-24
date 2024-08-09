@@ -1031,7 +1031,7 @@ void scadenze(magazzino_hash_t *magazzino, unsigned int t)
 
 ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
 {
-    ordine_t *albero_consegne, *temp_consegna, *temp_prodotto, *next_prodotto;
+    ordine_t *albero_consegne, *temp_consegna, *temp_prodotto, *next_prodotto, *elim_consegna;
     int cons, stop;
     unsigned long long residuo;
 
@@ -1040,6 +1040,7 @@ ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
     albero_consegne = NULL;
     stop = 1;
     next_prodotto = NULL;
+    elim_consegna = NULL;
 
     temp_prodotto = minimo_in_albero_ordini(albero_prodotti);
 
@@ -1072,10 +1073,11 @@ ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
             {
                 printf("%d %s %d\n", temp_consegna->t, temp_consegna->ricetta->nome, temp_consegna->q);
                 temp_consegna->ricetta->pending--;
-                albero_consegne = cancella_nodo_albero_ordini(albero_consegne, temp_consegna);
-                free(temp_consegna);
-                temp_consegna = NULL;
-                temp_consegna = massimo_in_albero_ordini(albero_consegne);
+                elim_consegna = temp_consegna;
+                temp_consegna = predecessore_albero_ordini(temp_consegna);
+                albero_consegne = cancella_nodo_albero_ordini(albero_consegne, elim_consegna);
+                free(elim_consegna);
+                elim_consegna = NULL;
             }
             elimina_albero_ordini(albero_consegne);
             temp_consegna = NULL;
