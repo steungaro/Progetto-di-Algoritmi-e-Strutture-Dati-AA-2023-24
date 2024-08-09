@@ -146,6 +146,27 @@ ordine_t *successore_albero_ordini(ordine_t *nodo)
     }
 }
 
+ordine_t *predecessore_albero_ordini(ordine_t *nodo)
+{
+    ordine_t *y, *x;
+
+    x = nodo;
+    if (nodo->left != NULL)
+    {
+        return massimo_in_albero_ordini(nodo->left);
+    }
+    else
+    {
+        y = nodo->p;
+        while (y != NULL && x == y->left)
+        {
+            x = y;
+            y = y->p;
+        }
+        return y;
+    }
+}
+
 ordine_t *inserimento_albero_ordini(ordine_t *albero, ordine_t *z)
 {
     ordine_t *x, *y;
