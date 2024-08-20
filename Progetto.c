@@ -4,6 +4,7 @@
 
 #define L_INPUT_MAX 17
 #define L_NOME_MAX 256
+#define PRIMO 16777619
 #define DIM_RICETTE 3923
 #define DIM_MAGAZZINO 907
 
@@ -72,7 +73,7 @@ int funzione_hash(char *stringa, int dim)
     for (i = 0; stringa[i] != '\0'; i++)
     {
         h ^= stringa[i];
-        h *= 16777619;
+        h *= PRIMO;
     }
 
     return h % dim;
@@ -136,6 +137,27 @@ ordine_t *successore_albero_ordini(ordine_t *nodo)
     {
         y = nodo->p;
         while (y != NULL && x == y->right)
+        {
+            x = y;
+            y = y->p;
+        }
+        return y;
+    }
+}
+
+ordine_t *predecessore_albero_ordini(ordine_t *nodo)
+{
+    ordine_t *y, *x;
+
+    x = nodo;
+    if (nodo->left != NULL)
+    {
+        return massimo_in_albero_ordini(nodo->left);
+    }
+    else
+    {
+        y = nodo->p;
+        while (y != NULL && x == y->left)
         {
             x = y;
             y = y->p;
@@ -448,39 +470,15 @@ void elimina_albero_lotti(lotto_t *albero)
 ricettario_hash_t *crea_hash_ricettario()
 {
     ricettario_hash_t *ricettario;
-    ricettario = malloc(sizeof(ricettario_hash_t));
-    if (ricettario)
-    {
-        int i;
-        for (i = 0; i < DIM_RICETTE; i++)
-        {
-            ricettario->elenco_ricette[i] = NULL;
-        }
-        return ricettario;
-    }
-    else
-    {
-        return NULL;
-    }
+    ricettario = calloc(1, sizeof(ricettario_hash_t));
+    return ricettario;
 }
 
 magazzino_hash_t *crea_hash_magazzino()
 {
     magazzino_hash_t *magazzino;
-    magazzino = malloc(sizeof(magazzino_hash_t));
-    if (magazzino)
-    {
-        int i;
-        for (i = 0; i < DIM_MAGAZZINO; i++)
-        {
-            magazzino->stock_ingredienti[i] = NULL;
-        }
-        return magazzino;
-    }
-    else
-    {
-        return NULL;
-    }
+    magazzino = calloc(1, sizeof(magazzino_hash_t));
+    return magazzino;
 }
 
 void elimina_hash_ricettario(ricettario_hash_t *ricettario)
@@ -538,71 +536,49 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
     stop = 0;
     stock_prev = NULL;
     temp = malloc(sizeof(ingrediente_t));
-    if (temp)
-    {
-        h = funzione_hash(*nome, DIM_MAGAZZINO);
-        stock_temp = magazzino->stock_ingredienti[h];
 
-        if (stock_temp == NULL)
-        {
-            stock_temp = malloc(sizeof(ingrediente_stock_t));
-            if (stock_temp)
-            {
-                stock_temp->nome = *nome;
-                stock_temp->next = NULL;
-                stock_temp->totale = 0;
-                stock_temp->lotto = NULL;
-                stock_temp->scadente = NULL;
-                temp->next = lista;
-                temp->q = q;
-                temp->stock = stock_temp;
-                magazzino->stock_ingredienti[h] = stock_temp;
-                return temp;
-            }
-            else
-            {
-                return lista;
-            }
-        }
-        else
-        {
-            for (stock_temp = magazzino->stock_ingredienti[h]; stock_temp != NULL && !stop; stock_temp = stock_temp->next)
-            {
-                if (!strcmp(stock_temp->nome, *nome))
-                {
-                    stop = 1;
-                    temp->next = lista;
-                    temp->q = q;
-                    temp->stock = stock_temp;
-                    free(*nome);
-                    return temp;
-                }
-                stock_prev = stock_temp;
-            }
-            stock_prev->next = malloc(sizeof(ingrediente_stock_t));
-            stock_temp = stock_prev->next;
-            if (stock_temp)
-            {
-                stock_temp->totale = 0;
-                stock_temp->lotto = NULL;
-                stock_temp->next = NULL;
-                stock_temp->nome = *nome;
-                stock_temp->scadente = NULL;
-                temp->next = lista;
-                temp->q = q;
-                temp->stock = stock_temp;
-                return temp;
-            }
-            else
-            {
-                return lista;
-            }
-        }
+    h = funzione_hash(*nome, DIM_MAGAZZINO);
+    stock_temp = magazzino->stock_ingredienti[h];
+
+    if (stock_temp == NULL)
+    {
+        stock_temp = malloc(sizeof(ingrediente_stock_t));
+        stock_temp->nome = *nome;
+        stock_temp->next = NULL;
+        stock_temp->totale = 0;
+        stock_temp->lotto = NULL;
+        stock_temp->scadente = NULL;
+        temp->next = lista;
+        temp->q = q;
+        temp->stock = stock_temp;
+        magazzino->stock_ingredienti[h] = stock_temp;
+        return temp;
     }
     else
     {
-        printf("errore aggiunta ingrediente\n");
-        return lista;
+        for (stock_temp = magazzino->stock_ingredienti[h]; stock_temp != NULL && !stop; stock_temp = stock_temp->next)
+        {
+            if (!strcmp(stock_temp->nome, *nome))
+            {
+                stop = 1;
+                temp->next = lista;
+                temp->q = q;
+                temp->stock = stock_temp;
+                free(*nome);
+                return temp;
+            }
+            stock_prev = stock_temp;
+        }
+        stock_prev->next = malloc(sizeof(ingrediente_stock_t));
+        stock_prev->next->totale = 0;
+        stock_prev->next->lotto = NULL;
+        stock_prev->next->next = NULL;
+        stock_prev->next->nome = *nome;
+        stock_prev->next->scadente = NULL;
+        temp->next = lista;
+        temp->q = q;
+        temp->stock = stock_prev->next;
+        return temp;
     }
 }
 
@@ -614,30 +590,23 @@ int aggiungi_ricetta(ricettario_hash_t *ricettario, char **nome_ricetta, ingredi
 
     temp_ricetta = NULL;
     temp_ricetta = malloc(sizeof(ricetta_t));
-    if (temp_ricetta)
-    {
-        temp_ricetta->nome = *nome_ricetta;
-        temp_ricetta->lista_ingredienti = lista_ingredienti;
-        temp_ricetta->pending = 0;
-        temp_ricetta->peso = peso;
-        temp_ricetta->next = NULL;
 
-        if (ricettario->elenco_ricette[i] == NULL)
-        {
-            ricettario->elenco_ricette[i] = temp_ricetta;
-            return i;
-        }
-        else
-        {
-            temp_ricetta->next = ricettario->elenco_ricette[i];
-            ricettario->elenco_ricette[i] = temp_ricetta;
-            return i;
-        }
+    temp_ricetta->nome = *nome_ricetta;
+    temp_ricetta->lista_ingredienti = lista_ingredienti;
+    temp_ricetta->pending = 0;
+    temp_ricetta->peso = peso;
+    temp_ricetta->next = NULL;
+
+    if (ricettario->elenco_ricette[i] == NULL)
+    {
+        ricettario->elenco_ricette[i] = temp_ricetta;
+        return i;
     }
     else
     {
-        printf("errore aggiunta ricetta\n");
-        return -1;
+        temp_ricetta->next = ricettario->elenco_ricette[i];
+        ricettario->elenco_ricette[i] = temp_ricetta;
+        return i;
     }
 }
 
@@ -651,75 +620,54 @@ int rifornimento(magazzino_hash_t *magazzino, char **nome, unsigned int scadenza
 
     lottonuovo = malloc(sizeof(lotto_t));
 
-    if (lottonuovo)
+    lottonuovo->scadenza = scadenza;
+    lottonuovo->q = quantita;
+    lottonuovo->left = NULL;
+    lottonuovo->right = NULL;
+    lottonuovo->p = NULL;
+
+    h = funzione_hash(*nome, DIM_MAGAZZINO);
+
+    if (magazzino->stock_ingredienti[h] == NULL)
     {
-        lottonuovo->scadenza = scadenza;
-        lottonuovo->q = quantita;
-        lottonuovo->left = NULL;
-        lottonuovo->right = NULL;
-        lottonuovo->p = NULL;
 
-        h = funzione_hash(*nome, DIM_MAGAZZINO);
+        ingrediente_temp = malloc(sizeof(ingrediente_stock_t));
+        ingrediente_temp->totale = quantita;
+        ingrediente_temp->lotto = lottonuovo;
+        ingrediente_temp->nome = *nome;
+        ingrediente_temp->scadente = lottonuovo;
+        magazzino->stock_ingredienti[h] = ingrediente_temp;
+        magazzino->stock_ingredienti[h]->next = NULL;
 
-        if (magazzino->stock_ingredienti[h] == NULL)
-        {
-
-            ingrediente_temp = malloc(sizeof(ingrediente_stock_t));
-            if (ingrediente_temp)
-            {
-                ingrediente_temp->totale = quantita;
-                ingrediente_temp->lotto = lottonuovo;
-                ingrediente_temp->nome = *nome;
-                ingrediente_temp->scadente = lottonuovo;
-                magazzino->stock_ingredienti[h] = ingrediente_temp;
-                magazzino->stock_ingredienti[h]->next = NULL;
-            }
-            else
-            {
-                return -1;
-            }
-
-            return h;
-        }
-        else
-        {
-
-            for (ingrediente_temp = magazzino->stock_ingredienti[h]; ingrediente_temp != NULL; ingrediente_temp = ingrediente_temp->next)
-            {
-                if (!strcmp(ingrediente_temp->nome, *nome))
-                {
-                    ingrediente_temp->totale += quantita;
-                    ingrediente_temp->lotto = inserimento_albero_lotti(ingrediente_temp->lotto, lottonuovo);
-                    if (ingrediente_temp->scadente == NULL || ingrediente_temp->scadente->scadenza > lottonuovo->scadenza)
-                    {
-                        ingrediente_temp->scadente = lottonuovo;
-                    }
-                    ingrediente_temp->scadente = minimo_in_albero_lotti(ingrediente_temp->lotto);
-                    free(*nome);
-                    return h;
-                }
-                ingrediente_prev = ingrediente_temp;
-            }
-            ingrediente_prev->next = malloc(sizeof(ingrediente_stock_t));
-            if (ingrediente_prev->next)
-            {
-                ingrediente_temp = ingrediente_prev->next;
-                ingrediente_temp->totale = quantita;
-                ingrediente_temp->lotto = lottonuovo;
-                ingrediente_temp->next = NULL;
-                ingrediente_temp->scadente = lottonuovo;
-                ingrediente_temp->nome = *nome;
-            }
-            else
-            {
-                return -1;
-            }
-            return h;
-        }
+        return h;
     }
     else
     {
-        return -1;
+
+        for (ingrediente_temp = magazzino->stock_ingredienti[h]; ingrediente_temp != NULL; ingrediente_temp = ingrediente_temp->next)
+        {
+            if (!strcmp(ingrediente_temp->nome, *nome))
+            {
+                ingrediente_temp->totale += quantita;
+                ingrediente_temp->lotto = inserimento_albero_lotti(ingrediente_temp->lotto, lottonuovo);
+                if (ingrediente_temp->scadente == NULL || ingrediente_temp->scadente->scadenza > lottonuovo->scadenza)
+                {
+                    ingrediente_temp->scadente = lottonuovo;
+                }
+                free(*nome);
+                return h;
+            }
+            ingrediente_prev = ingrediente_temp;
+        }
+        ingrediente_prev->next = malloc(sizeof(ingrediente_stock_t));
+        ingrediente_temp = ingrediente_prev->next;
+        ingrediente_temp->totale = quantita;
+        ingrediente_temp->lotto = lottonuovo;
+        ingrediente_temp->next = NULL;
+        ingrediente_temp->scadente = lottonuovo;
+        ingrediente_temp->nome = *nome;
+
+        return h;
     }
 }
 
@@ -794,37 +742,30 @@ ordine_t *aggiungi_ordine(ordine_t *coda, ordine_t **last, ricettario_hash_t *ri
     {
         ricetta->pending++;
         ordine = malloc(sizeof(ordine_t));
-        if (ordine)
+
+        ordine->left = NULL;
+        ordine->right = NULL;
+        ordine->p = NULL;
+        ordine->t = t;
+        ordine->q = q;
+        ordine->peso = ordine->q * ricetta->peso;
+        ordine->ricetta = ricetta;
+        *ret = 1;
+        if (coda)
         {
-            ordine->left = NULL;
-            ordine->right = NULL;
-            ordine->p = NULL;
-            ordine->t = t;
-            ordine->q = q;
-            ordine->peso = ordine->q * ricetta->peso;
-            ordine->ricetta = ricetta;
-            *ret = 1;
-            if (coda)
-            {
-                ultimo = (*last);
-                ultimo->right = ordine;
-                ordine->p = ultimo;
-                *last = ordine;
-            }
-            else
-            {
-                coda = ordine;
-                ordine->p = NULL;
-                ordine->right = NULL;
-                *last = coda;
-            }
-            return coda;
+            ultimo = (*last);
+            ultimo->right = ordine;
+            ordine->p = ultimo;
+            *last = ordine;
         }
         else
         {
-            *ret = -1;
-            return coda;
+            coda = ordine;
+            ordine->p = NULL;
+            ordine->right = NULL;
+            *last = coda;
         }
+        return coda;
     }
     else
     {
@@ -893,7 +834,7 @@ ordine_t *cucina(magazzino_hash_t *magazzino, ordine_t *codaordini, ordine_t **l
         cucinabile = 1;
         for (temp_ingrediente = temp_ordine->ricetta->lista_ingredienti; cucinabile && temp_ingrediente != NULL; temp_ingrediente = temp_ingrediente->next)
         {
-            if (temp_ingrediente->stock->totale >= temp_ordine->q * temp_ingrediente->q)
+            if (temp_ingrediente->stock->totale >= temp_ingrediente->q * temp_ordine->q)
             {
                 cucinabile = 1;
             }
@@ -983,61 +924,69 @@ void scadenze(magazzino_hash_t *magazzino, unsigned int t)
     }
 }
 
-ordine_t *consegne(unsigned int pc, ordine_t *albero_prodotti)
+ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
 {
     ordine_t *albero_consegne, *temp_consegna, *temp_prodotto, *next_prodotto;
     int cons, stop;
     unsigned long long residuo;
 
-    residuo = pc;
+    residuo = peso;
     cons = 0;
-    stop = 1;
     albero_consegne = NULL;
+    stop = 1;
     next_prodotto = NULL;
 
     temp_prodotto = minimo_in_albero_ordini(albero_prodotti);
 
-    while (temp_prodotto != NULL && stop)
+    if (temp_prodotto == NULL)
     {
-        if (temp_prodotto->peso <= residuo)
-        {
-            cons = 1;
-            residuo -= temp_prodotto->peso;
-
-            next_prodotto = successore_albero_ordini(temp_prodotto);
-            albero_prodotti = cancella_nodo_albero_ordini(albero_prodotti, temp_prodotto);
-            temp_prodotto->left = NULL;
-            temp_prodotto->right = NULL;
-            temp_prodotto->p = NULL;
-            albero_consegne = inserimento_albero_consegne(albero_consegne, temp_prodotto);
-            temp_prodotto = next_prodotto;
-        }
-        else
-        {
-            stop = 0;
-        }
-    }
-    temp_consegna = massimo_in_albero_ordini(albero_consegne);
-    if (cons)
-    {
-        while (temp_consegna)
-        {
-            printf("%d %s %d\n", temp_consegna->t, temp_consegna->ricetta->nome, temp_consegna->q);
-            temp_consegna->ricetta->pending--;
-            albero_consegne = cancella_nodo_albero_ordini(albero_consegne, temp_consegna);
-            free(temp_consegna);
-            temp_consegna = NULL;
-            temp_consegna = massimo_in_albero_ordini(albero_consegne);
-        }
-        elimina_albero_ordini(albero_consegne);
-        temp_consegna = NULL;
-        albero_consegne = NULL;
+        printf("camioncino vuoto\n");
+        return albero_prodotti;
     }
     else
     {
-        printf("camioncino vuoto\n");
+        while (temp_prodotto != NULL && stop)
+        {
+            if (temp_prodotto->peso <= residuo)
+            {
+                cons = 1;
+                residuo -= temp_prodotto->peso;
+
+                next_prodotto = successore_albero_ordini(temp_prodotto);
+                albero_prodotti = cancella_nodo_albero_ordini(albero_prodotti, temp_prodotto);
+                temp_prodotto->left = NULL;
+                temp_prodotto->right = NULL;
+                temp_prodotto->p = NULL;
+                albero_consegne = inserimento_albero_consegne(albero_consegne, temp_prodotto);
+                temp_prodotto = next_prodotto;
+            }
+            else
+            {
+                stop = 0;
+            }
+        }
+        temp_consegna = massimo_in_albero_ordini(albero_consegne);
+        if (cons)
+        {
+            while (temp_consegna)
+            {
+                printf("%d %s %d\n", temp_consegna->t, temp_consegna->ricetta->nome, temp_consegna->q);
+                temp_consegna->ricetta->pending--;
+                albero_consegne = cancella_nodo_albero_ordini(albero_consegne, temp_consegna);
+                free(temp_consegna);
+                temp_consegna = NULL;
+                temp_consegna = massimo_in_albero_ordini(albero_consegne);
+            }
+            elimina_albero_ordini(albero_consegne);
+            temp_consegna = NULL;
+            albero_consegne = NULL;
+        }
+        else
+        {
+            printf("camioncino vuoto\n");
+        }
+        return albero_prodotti;
     }
-    return albero_prodotti;
 }
 
 int main()
@@ -1209,20 +1158,16 @@ int main()
 
         if (t != 0 && t % fc == 0)
         {
-            if (albero_prodotti == NULL)
-            {
-                printf("camioncino vuoto\n");
-            }
-            else
-            {
-                albero_prodotti = consegne(pc, albero_prodotti);
-            }
+            albero_prodotti = consegne(pc, albero_prodotti);
         }
     }
 
+    /*
     elimina_albero_ordini(coda_ordini);
     elimina_albero_ordini(albero_prodotti);
     elimina_hash_ricettario(ricettario);
     elimina_hash_magazzino(magazzino);
+    */
+
     return 0;
 }
