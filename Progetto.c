@@ -5,8 +5,8 @@
 #define L_INPUT_MAX 17
 #define L_NOME_MAX 256
 #define PRIMO 16777619
-#define DIM_RICETTE 3923
-#define DIM_MAGAZZINO 907
+#define DIM_RICETTE 4787
+#define DIM_MAGAZZINO 1831
 
 typedef struct lotto
 {
@@ -61,7 +61,9 @@ typedef struct ordine
     struct ordine *left;
     struct ordine *right;
     struct ordine *p;
+    ingrediente_t *ultimo_mancante;
 } ordine_t;
+
 
 int funzione_hash(char *stringa, int dim)
 {
@@ -88,7 +90,6 @@ void elimina_lista_ingredienti(ingrediente_t *lista)
         temp = lista;
         lista = lista->next;
         free(temp);
-        temp = NULL;
     }
 }
 
@@ -542,12 +543,8 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
 
     if (stock_temp == NULL)
     {
-        stock_temp = malloc(sizeof(ingrediente_stock_t));
+        stock_temp = calloc(1, sizeof(ingrediente_stock_t));
         stock_temp->nome = *nome;
-        stock_temp->next = NULL;
-        stock_temp->totale = 0;
-        stock_temp->lotto = NULL;
-        stock_temp->scadente = NULL;
         temp->next = lista;
         temp->q = q;
         temp->stock = stock_temp;
@@ -569,12 +566,8 @@ ingrediente_t *aggiungi_ingrediente(magazzino_hash_t *magazzino, ingrediente_t *
             }
             stock_prev = stock_temp;
         }
-        stock_prev->next = malloc(sizeof(ingrediente_stock_t));
-        stock_prev->next->totale = 0;
-        stock_prev->next->lotto = NULL;
-        stock_prev->next->next = NULL;
+        stock_prev->next = calloc(1, sizeof(ingrediente_stock_t));
         stock_prev->next->nome = *nome;
-        stock_prev->next->scadente = NULL;
         temp->next = lista;
         temp->q = q;
         temp->stock = stock_prev->next;
@@ -589,13 +582,11 @@ int aggiungi_ricetta(ricettario_hash_t *ricettario, char **nome_ricetta, ingredi
     i = funzione_hash(*nome_ricetta, DIM_RICETTE);
 
     temp_ricetta = NULL;
-    temp_ricetta = malloc(sizeof(ricetta_t));
+    temp_ricetta = calloc(1, sizeof(ricetta_t));
 
     temp_ricetta->nome = *nome_ricetta;
     temp_ricetta->lista_ingredienti = lista_ingredienti;
-    temp_ricetta->pending = 0;
     temp_ricetta->peso = peso;
-    temp_ricetta->next = NULL;
 
     if (ricettario->elenco_ricette[i] == NULL)
     {
@@ -618,14 +609,10 @@ int rifornimento(magazzino_hash_t *magazzino, char **nome, unsigned int scadenza
 
     ingrediente_prev = NULL;
 
-    lottonuovo = malloc(sizeof(lotto_t));
+    lottonuovo = calloc(1, sizeof(lotto_t));
 
     lottonuovo->scadenza = scadenza;
     lottonuovo->q = quantita;
-    lottonuovo->left = NULL;
-    lottonuovo->right = NULL;
-    lottonuovo->p = NULL;
-
     h = funzione_hash(*nome, DIM_MAGAZZINO);
 
     if (magazzino->stock_ingredienti[h] == NULL)
@@ -741,11 +728,8 @@ ordine_t *aggiungi_ordine(ordine_t *coda, ordine_t **last, ricettario_hash_t *ri
     if (ricetta)
     {
         ricetta->pending++;
-        ordine = malloc(sizeof(ordine_t));
+        ordine = calloc(1, sizeof(ordine_t));
 
-        ordine->left = NULL;
-        ordine->right = NULL;
-        ordine->p = NULL;
         ordine->t = t;
         ordine->q = q;
         ordine->peso = ordine->q * ricetta->peso;
@@ -832,6 +816,11 @@ ordine_t *cucina(magazzino_hash_t *magazzino, ordine_t *codaordini, ordine_t **l
     while (temp_ordine != NULL)
     {
         cucinabile = 1;
+        if (temp_ordine->ultimo_mancante != NULL && temp_ordine->ultimo_mancante->stock->totale < temp_ordine->ultimo_mancante->q * temp_ordine->q)
+        {
+            cucinabile = 0;
+        }
+
         for (temp_ingrediente = temp_ordine->ricetta->lista_ingredienti; cucinabile && temp_ingrediente != NULL; temp_ingrediente = temp_ingrediente->next)
         {
             if (temp_ingrediente->stock->totale >= temp_ingrediente->q * temp_ordine->q)
@@ -841,6 +830,7 @@ ordine_t *cucina(magazzino_hash_t *magazzino, ordine_t *codaordini, ordine_t **l
             else
             {
                 cucinabile = 0;
+                temp_ordine->ultimo_mancante = temp_ingrediente;
             }
         }
 
@@ -926,14 +916,13 @@ void scadenze(magazzino_hash_t *magazzino, unsigned int t)
 
 ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
 {
-    ordine_t *albero_consegne, *temp_consegna, *temp_prodotto, *next_prodotto;
-    int cons, stop;
+    ordine_t *albero_consegne, *temp_consegna, *temp_prodotto, *next_prodotto, *elim_consegna;
+    int cons;
     unsigned long long residuo;
 
     residuo = peso;
     cons = 0;
     albero_consegne = NULL;
-    stop = 1;
     next_prodotto = NULL;
 
     temp_prodotto = minimo_in_albero_ordini(albero_prodotti);
@@ -945,25 +934,17 @@ ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
     }
     else
     {
-        while (temp_prodotto != NULL && stop)
+        while (temp_prodotto != NULL && temp_prodotto->peso <= residuo)
         {
-            if (temp_prodotto->peso <= residuo)
-            {
-                cons = 1;
-                residuo -= temp_prodotto->peso;
-
-                next_prodotto = successore_albero_ordini(temp_prodotto);
-                albero_prodotti = cancella_nodo_albero_ordini(albero_prodotti, temp_prodotto);
-                temp_prodotto->left = NULL;
-                temp_prodotto->right = NULL;
-                temp_prodotto->p = NULL;
-                albero_consegne = inserimento_albero_consegne(albero_consegne, temp_prodotto);
-                temp_prodotto = next_prodotto;
-            }
-            else
-            {
-                stop = 0;
-            }
+            cons = 1;
+            residuo -= temp_prodotto->peso;
+            next_prodotto = successore_albero_ordini(temp_prodotto);
+            albero_prodotti = cancella_nodo_albero_ordini(albero_prodotti, temp_prodotto);
+            temp_prodotto->left = NULL;
+            temp_prodotto->right = NULL;
+            temp_prodotto->p = NULL;
+            albero_consegne = inserimento_albero_consegne(albero_consegne, temp_prodotto);
+            temp_prodotto = next_prodotto;
         }
         temp_consegna = massimo_in_albero_ordini(albero_consegne);
         if (cons)
@@ -972,12 +953,12 @@ ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
             {
                 printf("%d %s %d\n", temp_consegna->t, temp_consegna->ricetta->nome, temp_consegna->q);
                 temp_consegna->ricetta->pending--;
-                albero_consegne = cancella_nodo_albero_ordini(albero_consegne, temp_consegna);
-                free(temp_consegna);
-                temp_consegna = NULL;
-                temp_consegna = massimo_in_albero_ordini(albero_consegne);
+                elim_consegna = temp_consegna;
+                temp_consegna = predecessore_albero_ordini(temp_consegna);
+                albero_consegne = cancella_nodo_albero_ordini(albero_consegne, elim_consegna);
+                free(elim_consegna);
+                elim_consegna = NULL;
             }
-            elimina_albero_ordini(albero_consegne);
             temp_consegna = NULL;
             albero_consegne = NULL;
         }
@@ -1019,15 +1000,17 @@ int main()
         printf("Errore creazione magazzino e/o ricettario.\n");
         return 0;
     }
+
     t = 0;
+
     if (scanf("%d %d ", &fc, &pc))
         ;
 
-    while (scanf(" %s", input) != -1)
+    while (scanf(" %s", input) != EOF)
     {
         nome[0] = '\0';
 
-        if (!strcmp(input, "aggiungi_ricetta"))
+        if (input[2] == 'g') // aggiungi_ricetta
         {
             tempricetta = NULL;
             if (scanf(" %s", nome))
@@ -1073,7 +1056,7 @@ int main()
                 printf("ignorato\n");
             }
         }
-        else if (!strcmp(input, "rimuovi_ricetta"))
+        else if (input[2] == 'm') // rimuovi_ricetta
         {
             if (scanf(" %[^\n]", nome))
                 ;
@@ -1091,7 +1074,7 @@ int main()
                 printf("ordini in sospeso\n");
             }
         }
-        else if (!strcmp(input, "rifornimento"))
+        else if (input[2] == 'f') // rifornimento
         {
             nl = getchar();
             while (nl != '\n')
@@ -1127,7 +1110,7 @@ int main()
             scadenze(magazzino, t);
             coda_ordini = cucina(magazzino, coda_ordini, &last, &albero_prodotti, 0);
         }
-        else if (!strcmp(input, "ordine"))
+        else if (input[2] == 'd') // ordine
         {
             if (scanf(" %s %d", nome, &qt))
                 ;
