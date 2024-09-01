@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
-#define L_INPUT_MAX 17
-#define L_NOME_MAX 256
-#define PRIMO 16777619
-#define DIM_RICETTE 4787
-#define DIM_MAGAZZINO 1831
+#define L_INPUT_MAX 17     // dimensione del comando più lungo
+#define L_NOME_MAX 256     // dimensione nome
+#define VALORE1 2099012099 // valori di hash
+#define VALORE2 10836481   // valori di hash
+#define DIM_RICETTE 4787   // dimensione del ricettario
+#define DIM_MAGAZZINO 1831 // dimensione del magazzino
 
 typedef struct lotto
 {
@@ -64,18 +66,17 @@ typedef struct ordine
     ingrediente_t *ultimo_mancante;
 } ordine_t;
 
-
 int funzione_hash(char *stringa, int dim)
 {
     unsigned int h;
     int i;
 
-    h = 2166136261;
+    h = VALORE1;
 
     for (i = 0; stringa[i] != '\0'; i++)
     {
         h ^= stringa[i];
-        h *= PRIMO;
+        h *= VALORE2;
     }
 
     return h % dim;
@@ -93,7 +94,7 @@ void elimina_lista_ingredienti(ingrediente_t *lista)
     }
 }
 
-ordine_t *minimo_in_albero_ordini(ordine_t *albero)
+ordine_t *minimo_in_albero_ordini(ordine_t *albero) // implementata da pseudocodice slides
 {
     ordine_t *temp;
 
@@ -109,7 +110,7 @@ ordine_t *minimo_in_albero_ordini(ordine_t *albero)
     return temp;
 }
 
-ordine_t *massimo_in_albero_ordini(ordine_t *albero)
+ordine_t *massimo_in_albero_ordini(ordine_t *albero) // implementata da pseudocodice slides
 {
     ordine_t *temp;
 
@@ -125,7 +126,7 @@ ordine_t *massimo_in_albero_ordini(ordine_t *albero)
     return temp;
 }
 
-ordine_t *successore_albero_ordini(ordine_t *nodo)
+ordine_t *successore_albero_ordini(ordine_t *nodo) // implementata da pseudocodice slides
 {
     ordine_t *y, *x;
 
@@ -146,7 +147,7 @@ ordine_t *successore_albero_ordini(ordine_t *nodo)
     }
 }
 
-ordine_t *predecessore_albero_ordini(ordine_t *nodo)
+ordine_t *predecessore_albero_ordini(ordine_t *nodo) // implementata da pseudocodice slides
 {
     ordine_t *y, *x;
 
@@ -167,7 +168,7 @@ ordine_t *predecessore_albero_ordini(ordine_t *nodo)
     }
 }
 
-ordine_t *inserimento_albero_ordini(ordine_t *albero, ordine_t *z)
+ordine_t *inserimento_albero_ordini(ordine_t *albero, ordine_t *z) // implementata da pseudocodice slides
 {
     ordine_t *x, *y;
 
@@ -204,7 +205,7 @@ ordine_t *inserimento_albero_ordini(ordine_t *albero, ordine_t *z)
     return albero;
 }
 
-ordine_t *cancella_nodo_albero_ordini(ordine_t *albero, ordine_t *z)
+ordine_t *cancella_nodo_albero_ordini(ordine_t *albero, ordine_t *z) // implementata da pseudocodice slides
 {
     ordine_t *x, *y;
 
@@ -250,7 +251,7 @@ ordine_t *cancella_nodo_albero_ordini(ordine_t *albero, ordine_t *z)
     return albero;
 }
 
-lotto_t *minimo_in_albero_lotti(lotto_t *albero)
+lotto_t *minimo_in_albero_lotti(lotto_t *albero) // implementata da pseudocodice slides
 {
     lotto_t *temp;
 
@@ -266,7 +267,7 @@ lotto_t *minimo_in_albero_lotti(lotto_t *albero)
     return temp;
 }
 
-lotto_t *massimo_in_albero_lotti(lotto_t *albero)
+lotto_t *massimo_in_albero_lotti(lotto_t *albero) // implementata da pseudocodice slides
 {
     lotto_t *temp;
 
@@ -282,7 +283,7 @@ lotto_t *massimo_in_albero_lotti(lotto_t *albero)
     return temp;
 }
 
-lotto_t *successore_albero_lotti(lotto_t *nodo)
+lotto_t *successore_albero_lotti(lotto_t *nodo) // implementata da pseudocodice slides
 {
     lotto_t *y, *x;
 
@@ -303,7 +304,7 @@ lotto_t *successore_albero_lotti(lotto_t *nodo)
     }
 }
 
-lotto_t *inserimento_albero_lotti(lotto_t *albero, lotto_t *z)
+lotto_t *inserimento_albero_lotti(lotto_t *albero, lotto_t *z) // implementata da pseudocodice slides
 {
     lotto_t *x, *y;
 
@@ -340,7 +341,7 @@ lotto_t *inserimento_albero_lotti(lotto_t *albero, lotto_t *z)
     return albero;
 }
 
-lotto_t *cancella_nodo_albero_lotti(lotto_t *albero, lotto_t *z)
+lotto_t *cancella_nodo_albero_lotti(lotto_t *albero, lotto_t *z) // implementata da pseudocodice slides
 {
     lotto_t *x, *y;
 
@@ -384,7 +385,7 @@ lotto_t *cancella_nodo_albero_lotti(lotto_t *albero, lotto_t *z)
     return albero;
 }
 
-int confronto(ordine_t *consegna1, ordine_t *consegna2)
+int confronto(ordine_t *consegna1, ordine_t *consegna2) // per confronto tra consegne in base a peso e ordine d'arrivo
 {
     if (consegna1->peso < consegna2->peso)
     {
@@ -407,7 +408,7 @@ int confronto(ordine_t *consegna1, ordine_t *consegna2)
     return 0;
 }
 
-ordine_t *inserimento_albero_consegne(ordine_t *albero, ordine_t *z)
+ordine_t *inserimento_albero_consegne(ordine_t *albero, ordine_t *z) // implementata da pseudocodice slides
 {
     ordine_t *x, *y;
 
@@ -444,7 +445,7 @@ ordine_t *inserimento_albero_consegne(ordine_t *albero, ordine_t *z)
     return albero;
 }
 
-void elimina_albero_ordini(ordine_t *albero)
+void elimina_albero_ordini(ordine_t *albero) // eventualmente da eseguire alla fine per svuotare la memoria
 {
     if (albero != NULL)
     {
@@ -456,7 +457,7 @@ void elimina_albero_ordini(ordine_t *albero)
     }
 }
 
-void elimina_albero_lotti(lotto_t *albero)
+void elimina_albero_lotti(lotto_t *albero) // eventualmente da eseguire alla fine per svuotare la memoria
 {
     if (albero != NULL)
     {
@@ -468,21 +469,21 @@ void elimina_albero_lotti(lotto_t *albero)
     }
 }
 
-ricettario_hash_t *crea_hash_ricettario()
+ricettario_hash_t *crea_hash_ricettario() // init ricettario
 {
     ricettario_hash_t *ricettario;
     ricettario = calloc(1, sizeof(ricettario_hash_t));
     return ricettario;
 }
 
-magazzino_hash_t *crea_hash_magazzino()
+magazzino_hash_t *crea_hash_magazzino() // init magazzino
 {
     magazzino_hash_t *magazzino;
     magazzino = calloc(1, sizeof(magazzino_hash_t));
     return magazzino;
 }
 
-void elimina_hash_ricettario(ricettario_hash_t *ricettario)
+void elimina_hash_ricettario(ricettario_hash_t *ricettario) // eventualmente da eseguire alla fine per svuotare la memoria
 {
     int i;
     ricetta_t *elim, *temp;
@@ -505,7 +506,7 @@ void elimina_hash_ricettario(ricettario_hash_t *ricettario)
     ricettario = NULL;
 }
 
-void elimina_hash_magazzino(magazzino_hash_t *magazzino)
+void elimina_hash_magazzino(magazzino_hash_t *magazzino) // eventualmente da eseguire alla fine per svuotare la memoria
 {
     int i;
     ingrediente_stock_t *elim, *temp;
@@ -973,7 +974,7 @@ ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti)
 int main()
 {
     char input[L_INPUT_MAX], nome[L_NOME_MAX], ingrediente[L_NOME_MAX];
-    int t, fc, pc, qt, peso, sc, primascadenza;
+    int t, fc, pc, qt, peso, sc;
     unsigned int ret, rif;
     char nl;
     ricettario_hash_t *ricettario;
@@ -990,7 +991,6 @@ int main()
     magazzino = NULL;
     last = NULL;
     tempstringa = NULL;
-    primascadenza = 0;
 
     ricettario = crea_hash_ricettario();
     magazzino = crea_hash_magazzino();
@@ -1003,18 +1003,16 @@ int main()
 
     t = 0;
 
-    if (scanf("%d %d ", &fc, &pc))
-        ;
+    assert(scanf("%d %d ", &fc, &pc));
 
     while (scanf(" %s", input) != EOF)
     {
         nome[0] = '\0';
 
-        if (input[2] == 'g') // aggiungi_ricetta
+        if (input[2] == 'g') // agGiungi_ricetta
         {
             tempricetta = NULL;
-            if (scanf(" %s", nome))
-                ;
+            assert(scanf(" %s", nome));
 
             tempricetta = ricerca_ricetta(ricettario, nome);
 
@@ -1025,8 +1023,7 @@ int main()
                 nl = getchar();
                 while (nl != '\n')
                 {
-                    if (scanf("%s %d", ingrediente, &qt))
-                        ;
+                    assert(scanf("%s %d", ingrediente, &qt));
                     peso += qt;
                     tempstringa = malloc(sizeof(char) * (strlen(ingrediente) + 1));
                     strcpy(tempstringa, ingrediente);
@@ -1051,15 +1048,13 @@ int main()
             }
             else
             {
-                if (scanf(" %*[^\n]"))
-                    ;
+                assert(!scanf(" %*[^\n]"));
                 printf("ignorato\n");
             }
         }
-        else if (input[2] == 'm') // rimuovi_ricetta
+        else if (input[2] == 'm') // riMuovi_ricetta
         {
-            if (scanf(" %[^\n]", nome))
-                ;
+            assert(scanf(" %[^\n]", nome));
             ret = elimina_ricetta(ricettario, nome);
             if (ret == 1)
             {
@@ -1074,13 +1069,12 @@ int main()
                 printf("ordini in sospeso\n");
             }
         }
-        else if (input[2] == 'f') // rifornimento
+        else if (input[2] == 'f') // riFornimento
         {
             nl = getchar();
             while (nl != '\n')
             {
-                if (scanf("%s %d %d", nome, &qt, &sc))
-                    ;
+                assert(scanf("%s %d %d", nome, &qt, &sc));
                 tempstringa = malloc(sizeof(char) * (strlen(nome) + 1));
                 strcpy(tempstringa, nome);
 
@@ -1088,14 +1082,6 @@ int main()
                 {
                     rif = 1;
                     ret = rifornimento(magazzino, &tempstringa, sc, qt);
-                    if (primascadenza == 0)
-                    {
-                        primascadenza = sc;
-                    }
-                    else if (primascadenza > sc || primascadenza < t)
-                    {
-                        primascadenza = sc;
-                    }
                 }
                 else
                 {
@@ -1110,21 +1096,16 @@ int main()
             scadenze(magazzino, t);
             coda_ordini = cucina(magazzino, coda_ordini, &last, &albero_prodotti, 0);
         }
-        else if (input[2] == 'd') // ordine
+        else if (input[2] == 'd') // orDine
         {
-            if (scanf(" %s %d", nome, &qt))
-                ;
+            assert(scanf(" %s %d", nome, &qt));
             coda_ordini = aggiungi_ordine(coda_ordini, &last, ricettario, nome, qt, t, &ret);
             if (ret == 1)
             {
                 printf("accettato\n");
                 if (rif)
                 {
-                    if (primascadenza <= t)
-                    {
-                        scadenze(magazzino, t);
-                        primascadenza = 0;
-                    }
+                    scadenze(magazzino, t);
                     coda_ordini = cucina(magazzino, coda_ordini, &last, &albero_prodotti, 1);
                 }
             }
@@ -1137,7 +1118,7 @@ int main()
         {
             printf("Errore \n");
         }
-        t++;
+        t++; // incremento del tempo generale
 
         if (t != 0 && t % fc == 0)
         {
