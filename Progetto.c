@@ -5,7 +5,7 @@
  *  Nome        : Stefano Ungaro
  *  Matricola   : 209901
  *  Valutazione : 30L
- * -----------------------------------------------
+ * ------------------------------------------------------
  */
 
 #include <stdio.h>          // libreria standard I/O
