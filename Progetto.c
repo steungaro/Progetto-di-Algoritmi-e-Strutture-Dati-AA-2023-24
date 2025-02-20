@@ -1,3 +1,13 @@
+/*
+ * ======================================================
+ *  PROVA FINALE - PROGETTO DI ALGORITMI E STRUTTURE DATI
+ * ======================================================
+ *  Nome        : Stefano Ungaro
+ *  Matricola   : 209901
+ *  Valutazione : 30L
+ * -----------------------------------------------
+ */
+
 #include <stdio.h>          // libreria standard I/O
 #include <stdlib.h>         // libreria standard
 #include <string.h>         // libreria per le stringhe
