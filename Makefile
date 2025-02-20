@@ -1,2 +1,2 @@
-CFLAGS += -Wall -Werror -std=gnu11 -g3 -O2 -fsanitize=address
+CFLAGS += -Wall -Werror -std=gnu11 -g3 -O2
 LDFLAGS += -lm
