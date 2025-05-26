@@ -1,4 +1,4 @@
-# 🧁 Prova Finale: Progetto di Algoritmi e Strutture Dati: Simulatore di Pasticceria Industriale
+# 🧁 Prova Finale: Progetto di Algoritmi e Strutture Dati - Simulatore di Pasticceria Industriale
 
 Questo progetto è una simulazione a tempo discreto del funzionamento di una pasticceria industriale, sviluppato come prova finale di **Algoritmi e Strutture Dati 2023-2024** presso il Politecnico di Milano. Il programma gestisce ingredienti, ricette, ordini dei clienti, rifornimenti di magazzino e spedizioni tramite corriere.
 
