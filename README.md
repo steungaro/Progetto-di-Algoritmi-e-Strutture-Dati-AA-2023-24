@@ -71,3 +71,16 @@ Per eseguire il programma con input da file:
 ```bash
 ./pasticceria < input.txt >output.txt
 ```
+
+## 📂 Struttura del progetto
+
+```bash
+📁 Progetto-di-Algoritmi-e-Strutture-Dati-2023-24
+├── Testbenches/
+│   └── *.txt                          # Test bench pubblici (input)
+│   └── *.output.true.txt              # Test bench oubblici (output attesi)
+├── README.md
+├── Progetto.c                         # Codice del progetto
+├── Makefile                           # File di istruzioni per il compilatore
+├── Specifica_progetto.pdf             # Specifica del progetto
+```
