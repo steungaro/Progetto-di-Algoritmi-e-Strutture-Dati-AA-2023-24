@@ -1,26 +1,71 @@
-# Prova Finale: Progetto di Algoritmi e Strutture Dati A.A. 2023/24
-Il progetto di Algoritmi e Strutture Dati è uno dei tre progetti assegnati durante il corso di laurea triennale in Ingegneria Informatica del Politecnico di Milano. Ha valore di 1 CFU.
+# 🧁 Prova Finale: Progetto di Algoritmi e Strutture Dati: Simulatore di Pasticceria Industriale
 
-Il progetto prevede di implementare un programma in C che risponde a una specifica fornita di anno in anno e richiede di applicare le nozioni di complessità e le ottimizzazioni apprese durante il corso di Algoritmi e Principi dell'Informatica (API).
+Questo progetto è una simulazione a tempo discreto del funzionamento di una pasticceria industriale, sviluppato come prova finale del corso di **Algoritmi e Strutture Dati 2023-2024**. Il programma gestisce ingredienti, ricette, ordini dei clienti, rifornimenti di magazzino e spedizioni tramite corriere.
 
-Il progetto viene valutato attraverso un testbench privato che inietta un input nel file `stdin` e analizza l'output prodotto su `stdout`. Se tale output è corretto, viene valutata la durata dell'elaborazione e l'impiego massimo di memoria.
+## ⚙️ Funzionalità principali
 
-In base a detti parametri la piattaforma responsabile dell'elaborazione restituisce un voto.
+- **Gestione ricette**: aggiunta, rimozione e utilizzo di ricette per dolci.
+- **Gestione magazzino**: stoccaggio di ingredienti con gestione della scadenza.
+- **Gestione ordini**: accettazione e preparazione ordini in base alla disponibilità degli ingredienti.
+- **Gestione corriere**: carico periodico degli ordini pronti secondo peso e capienza.
 
-La prova è stata passata con 30L/30.
+## 🕓 Simulazione a tempo discreto
 
-| VOTO | TEMPO  | MEMORIA    |
-|------|--------|------------|
-| OPEN | 45.0 s | 150.0 MiB  |
-| 18   | 14.0 s | 35.0 MiB   |
-| 21   | 11.5 s | 30.0 MiB   |
-| 24   | 9.0 s  | 25.0 MiB   |
-| 27   | 6.5 s  | 20.0 MiB   |
-| 30   | 4.0 s  | 15.0 MiB   |
-| 30L  | 1.5 s  | 14.0 MiB   |
+Ogni comando in ingresso corrisponde a un'unità di tempo. Alcuni eventi (come il passaggio del corriere) avvengono a intervalli regolari predefiniti.
 
-NB: il test di OPEN è stato inserito con limiti di tempo e memoria volutamente molto larghi per dare un'idea agli studenti che non avessero passato il test del 18 di capire di quando abbiano ecceduto le richieste.
+## 💬 Comandi supportati
 
-L'ultima sottoposizione di questo file ha impiegato 1.208 s per l'elaborazione e ha impiegato 12.6 MiB di memoria nel suo picco.
+Il programma legge i comandi da **stdin**, uno per riga, con il seguente formato:
 
-I testbench "open" sono stati forniti insieme alla specifica.
+- `aggiungi_ricetta <nome_ricetta> <ingrediente> <quantità> ...`
+- `rimuovi_ricetta <nome_ricetta>`
+- `rifornimento <ingrediente> <quantità> <scadenza> ...`
+- `ordine <nome_ricetta> <numero_dolci>`
+
+## 📤 Output
+
+Oltre alla risposta immediata per ciascun comando (`aggiunta`, `rifornito`, `accettato`, ecc.), ad ogni istante multiplo della periodicità del corriere viene stampato lo stato del carico del camioncino.
+
+Esempio di output:
+```
+5 ciambella 6
+10 torta 1
+13 torta 1
+```
+
+## 🚚 Regole di spedizione
+
+- Gli ordini vengono caricati nel camioncino in ordine cronologico, finché non si raggiunge il limite di peso.
+- L’ordine di carico effettivo è per peso decrescente, a parità di peso vale l’ordine cronologico.
+
+## 🔧 Compilazione
+
+Per compilare il programma:
+```bash
+gcc -o pasticceria progetto.c
+```
+
+## ▶️ Esecuzione
+
+Per eseguire il programma con input da file:
+```bash
+./pasticceria < input.txt
+```
+
+## 🧪 Esempio
+
+Input:
+```
+5 325
+aggiungi_ricetta torta farina 50 uova 10 zucchero 20
+rifornimento farina 100 10 uova 100 10 zucchero 100 10
+ordine torta 2
+```
+
+Output:
+```
+aggiunta
+rifornito
+accettato
+5 0 torta 2
+```
