@@ -78,7 +78,7 @@ Per eseguire il programma con input da file:
 📁 Progetto-di-Algoritmi-e-Strutture-Dati-2023-24
 ├── Testbenches/
 │   └── *.txt                          # Test bench pubblici (input)
-│   └── *.output.true.txt              # Test bench oubblici (output attesi)
+│   └── *.output.true.txt              # Test bench pubblici (output attesi)
 ├── README.md
 ├── Progetto.c                         # Codice del progetto
 ├── Makefile                           # File di istruzioni per il compilatore
