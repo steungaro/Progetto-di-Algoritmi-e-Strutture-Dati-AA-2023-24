@@ -26,13 +26,6 @@ Il programma legge i comandi da **stdin**, uno per riga, con il seguente formato
 
 Oltre alla risposta immediata per ciascun comando (`aggiunta`, `rifornito`, `accettato`, ecc.), ad ogni istante multiplo della periodicità del corriere viene stampato lo stato del carico del camioncino.
 
-Esempio di output:
-```
-5 ciambella 6
-10 torta 1
-13 torta 1
-```
-
 ## 🚚 Regole di spedizione
 
 - Gli ordini vengono caricati nel camioncino in ordine cronologico, finché non si raggiunge il limite di peso.
