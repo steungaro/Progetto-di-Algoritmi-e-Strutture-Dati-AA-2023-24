@@ -62,7 +62,7 @@ NB: è presente un file `Makefile` che imposta alcuni flag di compilazione forni
 
 Per eseguire il programma con input da file:
 ```bash
-./pasticceria < input.txt >output.txt
+./pasticceria < input.txt > output.txt
 ```
 
 ## 📂 Struttura del progetto
