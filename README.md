@@ -46,7 +46,7 @@ Oltre alla risposta immediata per ciascun comando (`aggiunta`, `rifornito`, `acc
 | 30   | 4.0 s  | 15.0 MiB   |
 | 30L  | 1.5 s  | 14.0 MiB   |
 
-NB: il test di OPEN è stato inserito con limiti di tempo e memoria volutamente molto larghi per dare un'idea agli studenti che non avessero passato il test del 18 di capire di quando avessero ecceduto le richieste.
+NB: il test di OPEN è stato inserito con limiti di tempo e memoria volutamente molto larghi per dare la possibilità agli studenti che non avessero passato il test del 18 di capire di quanto avessero ecceduto le richieste.
 
 L'ultima sottoposizione di questo file ha impiegato **1.208 s** per l'elaborazione e ha impiegato **12.6 MiB** di memoria nel suo picco.
 
