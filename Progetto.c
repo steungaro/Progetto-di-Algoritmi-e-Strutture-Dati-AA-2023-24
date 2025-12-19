@@ -3,36 +3,35 @@
  *  PROVA FINALE - PROGETTO DI ALGORITMI E STRUTTURE DATI
  * ======================================================
  *  Nome        : Stefano Ungaro
- *  Matricola   : 209901
  *  Valutazione : 30L
  * ------------------------------------------------------
  */
 
-#include <stdio.h>          // libreria standard I/O
-#include <stdlib.h>         // libreria standard
-#include <string.h>         // libreria per le stringhe
-#include <assert.h>         // libreria per le asserzioni (usate per leggere con scanf)
+#include <stdio.h>  // libreria standard I/O
+#include <stdlib.h> // libreria standard
+#include <string.h> // libreria per le stringhe
+#include <assert.h> // libreria per le asserzioni (usate per leggere con scanf)
 
-#define L_INPUT_MAX 17      // dimensione del comando più lungo che è possibile ricevere
-#define L_NOME_MAX 256      // dimensione nome generico (da specifica)
-#define VALORE1 2099012099  // valori di hash
-#define VALORE2 10836481    // valori di hash
-#define DIM_RICETTE 4787    // dimensione del ricettario (arbitraria, scelto un numero primo)
-#define DIM_MAGAZZINO 1831  // dimensione del magazzino (arbitraria, scelto un numero primo)
+#define L_INPUT_MAX 17     // dimensione del comando più lungo che è possibile ricevere
+#define L_NOME_MAX 256     // dimensione nome generico (da specifica)
+#define VALORE1 2099012099 // valori di hash
+#define VALORE2 10836481   // valori di hash
+#define DIM_RICETTE 4787   // dimensione del ricettario (arbitraria, scelto un numero primo)
+#define DIM_MAGAZZINO 1831 // dimensione del magazzino (arbitraria, scelto un numero primo)
 
 typedef struct lotto
 {
-    unsigned int scadenza;  // scadenza del lotto sotto forma di intero
-    unsigned int q;         // quantità del lotto
-    struct lotto *left;     // puntatore al figlio sinistro
-    struct lotto *right;    // puntatore al figlio destro
-    struct lotto *p;        // puntatore al genitore
-} lotto_t;                  // struttura per i lotti contenuta nei singoli ingredienti del magazzino
+    unsigned int scadenza; // scadenza del lotto sotto forma di intero
+    unsigned int q;        // quantità del lotto
+    struct lotto *left;    // puntatore al figlio sinistro
+    struct lotto *right;   // puntatore al figlio destro
+    struct lotto *p;       // puntatore al genitore
+} lotto_t;                 // struttura per i lotti contenuta nei singoli ingredienti del magazzino
 
 typedef struct ingrediente_stock
 {
     struct ingrediente_stock *next; // puntatore all'ingrediente successivo
-    char *nome;                     // nome dell'ingrediente 
+    char *nome;                     // nome dell'ingrediente
     unsigned int totale;            // quantità totale dell'ingrediente (somma di tutti i lotti)
     lotto_t *lotto;                 // puntatore alla radice dell'albero dei lotti per quell'ingrediente
     lotto_t *scadente;              // puntatore al lotto con scadenza più vicina per evitare la scansione dell'albero ogni volta
@@ -52,12 +51,12 @@ typedef struct
 
 typedef struct ricetta
 {
-    char *nome;                         // nome della ricetta   
-    ingrediente_t *lista_ingredienti;   // lista degli ingredienti della ricetta
-    unsigned int pending;               // numero di ordini in sospeso per quella ricetta
-    unsigned int peso;                  // peso della ricetta (somma dei pesi di ogni ingrediente)
-    struct ricetta *next;               // puntatore alla ricetta successiva
-} ricetta_t;                            // struttura per le ricette contenute nel ricettario, cioè singoli elementi della tabella hash
+    char *nome;                       // nome della ricetta
+    ingrediente_t *lista_ingredienti; // lista degli ingredienti della ricetta
+    unsigned int pending;             // numero di ordini in sospeso per quella ricetta
+    unsigned int peso;                // peso della ricetta (somma dei pesi di ogni ingrediente)
+    struct ricetta *next;             // puntatore alla ricetta successiva
+} ricetta_t;                          // struttura per le ricette contenute nel ricettario, cioè singoli elementi della tabella hash
 
 typedef struct
 {
@@ -66,15 +65,15 @@ typedef struct
 
 typedef struct ordine
 {
-    unsigned int t;                     // tempo di arrivo dell'ordine
-    ricetta_t *ricetta;                 // puntatore alla ricetta dell'ordine
-    unsigned int q;                     // quantità richiesta dell'ordine
-    unsigned int peso;                  // peso dell'ordine (quantità richiesta * peso della ricetta)
-    struct ordine *left;                // puntatore al figlio sinistro
-    struct ordine *right;               // puntatore al figlio destro
-    struct ordine *p;                   // puntatore al genitore
-    ingrediente_t *ultimo_mancante;     // puntatore all'ultimo ingrediente mancante per la preparazione dell'ordine (statisticamente il più probabile che manchi ancora)
-} ordine_t;                             // struttura per gli ordini contenuti nella coda degli ordini e nell'albero degli ordini prodotti (la coda ordini è una lista che usa solo il figlio destro, l'albero ordini prodotti è un albero binario di ricerca)
+    unsigned int t;                 // tempo di arrivo dell'ordine
+    ricetta_t *ricetta;             // puntatore alla ricetta dell'ordine
+    unsigned int q;                 // quantità richiesta dell'ordine
+    unsigned int peso;              // peso dell'ordine (quantità richiesta * peso della ricetta)
+    struct ordine *left;            // puntatore al figlio sinistro
+    struct ordine *right;           // puntatore al figlio destro
+    struct ordine *p;               // puntatore al genitore
+    ingrediente_t *ultimo_mancante; // puntatore all'ultimo ingrediente mancante per la preparazione dell'ordine (statisticamente il più probabile che manchi ancora)
+} ordine_t;                         // struttura per gli ordini contenuti nella coda degli ordini e nell'albero degli ordini prodotti (la coda ordini è una lista che usa solo il figlio destro, l'albero ordini prodotti è un albero binario di ricerca)
 
 int funzione_hash(char *stringa, int dim) // funzione hash per le stringhe
 {
@@ -983,7 +982,7 @@ ordine_t *consegne(unsigned int peso, ordine_t *albero_prodotti) // funzione per
 
 int main()
 {
-    char input[L_INPUT_MAX], nome[L_NOME_MAX], ingrediente[L_NOME_MAX]; 
+    char input[L_INPUT_MAX], nome[L_NOME_MAX], ingrediente[L_NOME_MAX];
     int t, fc, pc, qt, peso, sc;
     unsigned int ret, rif;
     char nl;
@@ -1022,7 +1021,7 @@ int main()
     {
         nome[0] = '\0';
 
-        if (input[2] == 'g')    // agGiungi_ricetta
+        if (input[2] == 'g') // agGiungi_ricetta
         {
             tempricetta = NULL;
             assert(scanf(" %s", nome));
@@ -1066,26 +1065,26 @@ int main()
                 printf("ignorato\n");
             }
         }
-        else if (input[2] == 'm')   // riMuovi_ricetta
+        else if (input[2] == 'm') // riMuovi_ricetta
         {
             assert(scanf(" %[^\n]", nome));
             ret = elimina_ricetta(ricettario, nome);
-            if (ret == 1)           // se la ricetta è stata eliminata
+            if (ret == 1) // se la ricetta è stata eliminata
             {
                 printf("rimossa\n");
             }
-            else if (ret == -1)     // se la ricetta non viene trovata
+            else if (ret == -1) // se la ricetta non viene trovata
             {
                 printf("non presente\n");
             }
-            else                    // se ci sono ordini in sospeso (ret = -2)
+            else // se ci sono ordini in sospeso (ret = -2)
             {
                 printf("ordini in sospeso\n");
             }
         }
-        else if (input[2] == 'f')   // riFornimento
+        else if (input[2] == 'f') // riFornimento
         {
-            nl = getchar();         // leggo il carattere di spazio (sarà ' ' oppure '\n')
+            nl = getchar(); // leggo il carattere di spazio (sarà ' ' oppure '\n')
             while (nl != '\n')
             {
                 assert(scanf("%s %d %d", nome, &qt, &sc));
@@ -1093,9 +1092,9 @@ int main()
                 tempstringa = malloc(sizeof(char) * (strlen(nome) + 1));
                 strcpy(tempstringa, nome);
 
-                if (sc > t)         // se la scadenza è futura (nei test ci arrivano anche prodotti già scaduti)
+                if (sc > t) // se la scadenza è futura (nei test ci arrivano anche prodotti già scaduti)
                 {
-                    rif = 1;        // flag per rifornimento (implementazione abbastanza superflua ma evita i primi controlli inutili se non ci sono ancora stati rifornimenti)
+                    rif = 1;                                             // flag per rifornimento (implementazione abbastanza superflua ma evita i primi controlli inutili se non ci sono ancora stati rifornimenti)
                     ret = rifornimento(magazzino, &tempstringa, sc, qt); // non uso il valore di ritorno perché non previsto dalla specifica ma utile per debug
                 }
                 else
@@ -1112,32 +1111,32 @@ int main()
             // se ci sono ordini in sospeso li cucino con il codice 0, che controlla l'intera coda ordini
             coda_ordini = cucina(magazzino, coda_ordini, &last, &albero_prodotti, 0);
         }
-        else if (input[2] == 'd')   // orDine
+        else if (input[2] == 'd') // orDine
         {
             assert(scanf(" %s %d", nome, &qt));
             coda_ordini = aggiungi_ordine(coda_ordini, &last, ricettario, nome, qt, t, &ret);
-            if (ret == 1)           // se l'ordine è stato aggiunto
+            if (ret == 1) // se l'ordine è stato aggiunto
             {
                 printf("accettato\n");
-                if (rif)            // se c'è stato un rifornimento
+                if (rif) // se c'è stato un rifornimento
                 {
                     scadenze(magazzino, t);
                     // cucino l'ordine appena aggiunto con il codice 1, che parte dall'ultimo ordine aggiunto, visto che l'ordine in sé non cambia il magazzino e se gli ordini precedenti non potevano essere cucinati non lo saranno ancora
                     coda_ordini = cucina(magazzino, coda_ordini, &last, &albero_prodotti, 1);
                 }
             }
-            else                    // se l'ordine non è stato aggiunto (ricetta non trovata)
+            else // se l'ordine non è stato aggiunto (ricetta non trovata)
             {
                 printf("rifiutato\n");
             }
         }
-        else                        // non ci sono altri comandi, implementazione per evitare errori in debug
+        else // non ci sono altri comandi, implementazione per evitare errori in debug
         {
             printf("Errore \n");
         }
-        t++;        // incremento del tempo generale
+        t++; // incremento del tempo generale
 
-        if (t != 0 && t % fc == 0)  // se è il momento delle consegne (il corriere passa ogni fc istanti di tempo)
+        if (t != 0 && t % fc == 0) // se è il momento delle consegne (il corriere passa ogni fc istanti di tempo)
         {
             // la funzione consegne prende il gestione anche stdout
             albero_prodotti = consegne(pc, albero_prodotti);
@@ -1154,5 +1153,5 @@ int main()
     elimina_hash_magazzino(magazzino);
     */
 
-    return 0;       // fine programma
+    return 0; // fine programma
 }
